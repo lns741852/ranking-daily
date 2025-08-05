@@ -1,0 +1,119 @@
+#配置數據源
+spring:
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    #allowPublicKeyRetrieval=true，以允許客戶端自動從服務器請求公鑰。僅在開發時使用。
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:rerank}?serverTimezone=Asia/Shanghai&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:root}
+    password: ${DB_PWD:123456}
+    druid:
+      # 初始連接數
+      initial-size: 5
+      # 最小連接數
+      min-idle: 15
+      # 最大連接數
+      max-active: 30
+      # 超時時間(以秒數為單位)
+      remove-abandoned-timeout: 180
+      # 獲取連接超時時間
+      max-wait: 3000
+      # 連接有效性檢測時間
+      time-between-eviction-runs-millis: 60000
+      # 連接在池中最小生存的時間
+      min-evictable-idle-time-millis: 300000
+      # 連接在池中最大生存的時間
+      max-evictable-idle-time-millis: 900000
+      # 指明連接是否被空閒連接回收器(如果有)進行檢驗.如果檢測失敗,則連接將被從池中去除
+      test-while-idle: true
+      # 指明是否在從池中取出連接前進行檢驗,如果檢驗失敗, 則從池中去除連接並嘗試取出另一個
+      test-on-borrow: true
+      # 是否在歸還到池中前進行檢驗
+      test-on-return: false
+      # 檢測連接是否有效
+      validation-query: select 1
+      # 配置監控統計
+      webStatFilter:
+        enabled: true
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        reset-enable: false
+      filter:
+        stat:
+          enabled: true
+          # 記錄慢SQL
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+
+
+# 登入相關配置
+login:
+  #  是否限制單用戶登入
+  single-login: false
+  # Redis用戶登錄緩存配置
+  user-cache:
+    # 存活時間/秒
+    idle-time: 21600
+  #  驗證碼
+  login-code:
+    #  驗證碼類型配置 查看 LoginProperties 類
+    code-type: arithmetic
+    #  登錄圖形驗證碼有效時間/分鐘
+    expiration: 2
+    #  驗證碼高度
+    width: 111
+    #  驗證碼寬度
+    height: 36
+    # 內容長度
+    length: 2
+    # 字體名稱，為空則使用默認字體
+    font-name:
+    # 字體大小
+    font-size: 25
+
+#jwt
+jwt:
+  header: Authorization
+  token-start-with: Bearer
+  # 密鑰
+  base64-secret: ZmQ0ZGI5NjQ0MDQwY2I4MjMxY2Y3ZmI3MjdhN2ZmMjNhODViOTg1ZGE0NTBjMGM4NDA5NzYxMjdjOWMwYWRmZTBlZjlhNGY3ZTg4Y2U3YTE1ODVkZDU5Y2Y3OGYwZWE1NzUzNWQ2YjFjZDc0NGMxZWU2MmQ3MjY1NzJmNTE0MzI=
+  # 有效時間
+  token-validity-in-millis: 14400000
+  # 在線用戶key
+  online-key: "online-token:"
+  # 驗證碼
+  code-key: "captcha-code:"
+  # token 續期時間，在到期前30分鐘內操作，續一個小時
+  detect: 1800000
+  renew: 3600000
+  claim_key_username: username
+  authorities_key: user
+
+#是否允許生成代碼，生產環境設置為false
+generator:
+  enabled: true
+
+#是否開啟 swagger-ui
+swagger:
+  enabled: true
+
+# 文件儲存路徑
+file:
+  mac:
+    path: ~/file/
+    avatar: ~/avatar/
+  linux:
+    path: /home/eladmin/file/
+    avatar: /home/eladmin/avatar/
+  windows:
+    path: C:\eladmin\file\
+    avatar: C:\eladmin\avatar\
+  # 文件大小 /M
+  maxSize: 100
+  avatarMaxSize: 5
+
+
