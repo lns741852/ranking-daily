@@ -9,11 +9,13 @@ import com.song.rerank.security.TokenFilter;
 import com.song.rerank.security.TokenProvider;
 import com.song.rerank.service.UserCacheService;
 import com.song.rerank.service.UserStatuService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -22,9 +24,15 @@ import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -45,6 +53,8 @@ public class SecurityConfig {
     private final SecurityProperties properties;
     private final UserStatuService userStatuService;
     private final UserCacheService userCacheService;
+    private final AuthenticationSuccessHandler oidcSuccessHandler;
+
 
     @Bean
     GrantedAuthorityDefaults grantedAuthorityDefaults() {
@@ -64,9 +74,14 @@ public class SecurityConfig {
         Map<String, Set<String>> anonymousUrls = getAnonymousUrl(methodMap);
 
         http
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 //禁止CSRF
                 .csrf(AbstractHttpConfigurer::disable)
+                //filter
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new TokenFilter(tokenProvider, properties, userStatuService, userCacheService),
+                        UsernamePasswordAuthenticationFilter.class)
                 // 登入異常處理
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationErrorHandler)
@@ -93,15 +108,25 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, anonymousUrls.get("PUT").toArray(new String[0])).permitAll()
                         .requestMatchers(HttpMethod.PATCH, anonymousUrls.get("PATCH").toArray(new String[0])).permitAll()
                         .requestMatchers(HttpMethod.DELETE, anonymousUrls.get("DELETE").toArray(new String[0])).permitAll()
-//                        .requestMatchers(anonymousUrls.get("ALL").toArray(new String[0])).permitAll()
 
                         // 其他所有請求都需驗證
                         .anyRequest().authenticated()
-                );
 
-        // 加上 JWT 過濾器
-        http.addFilterBefore(new TokenFilter(tokenProvider, properties, userStatuService, userCacheService),
-                UsernamePasswordAuthenticationFilter.class);
+                ).oauth2Login(oauth -> oauth
+                        .loginPage("/oauth2/authorization/google") // 可直接用此 endpoint 觸發登入
+                        .successHandler(oidcSuccessHandler)
+                )
+                // 若你的 API 要用你自己簽發的 JWT 來保護，也可啟用 Resource Server：
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(Customizer.withDefaults())
+                ).exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"error\":\"UNAUTHORIZED\"}");
+                        })
+                );;
+
 
         return http.build();
     }

@@ -3,10 +3,7 @@ package com.song.rerank.security;
 import com.song.rerank.config.properties.SecurityProperties;
 import com.song.rerank.utils.EncryptUtils;
 import com.song.rerank.utils.RedisUtils;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +17,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +41,21 @@ public class TokenProvider {
 
         return jwtBuilder.compact();
     }
+
+    public String createToken(String subject,  String name) {
+        JwtBuilder jwtBuilder = getJwtBuilder()
+                .id(UUID.randomUUID().toString())
+                .subject(subject)
+                .claim(properties.getClaimKeyUsername(), name);
+
+        jwtBuilder.header()
+                .add(properties.getAuthoritiesKey(),name);
+
+        return jwtBuilder.compact();
+    }
+
+
+
 
     Authentication getAuthentication(String token) {
         Claims claims = getClaims(token);
