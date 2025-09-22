@@ -54,7 +54,7 @@ public class JwtUserDto implements UserDetails {
 
     private Boolean enabled;
 
-    private Boolean isAdmin = false;
+    private Boolean isGrant = false;
 
     private Date pwdResetTime;
 
@@ -62,9 +62,13 @@ public class JwtUserDto implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if(isGrant){
+           return null;
+        }
         return roles.stream()
                 .flatMap(roleDto -> roleDto.getPermissions().stream())
                 .filter(menuDto -> menuDto.getPermission()!= null)
                 .map(menuDto -> new SimpleGrantedAuthority(menuDto.getPermission())).toList();
+
     }
 }
