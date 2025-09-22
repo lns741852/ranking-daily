@@ -49,7 +49,7 @@ public class User extends BaseEntity implements Serializable {
     @NotNull
     private Boolean enabled;
 
-    private Boolean isAdmin = false;
+    private Boolean isGrant = false;
 
     @Column(name = "pwd_reset_time")
     private Date pwdResetTime;
