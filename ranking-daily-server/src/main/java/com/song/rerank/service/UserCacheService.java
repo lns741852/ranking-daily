@@ -1,10 +1,9 @@
 package com.song.rerank.service;
 
 
-import com.song.rerank.config.properties.LoginProperties;
+import com.song.rerank.properties.LoginProperties;
 import com.song.rerank.domain.dto.JwtUserDto;
 import com.song.rerank.utils.RedisUtils;
-import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

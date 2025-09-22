@@ -87,8 +87,8 @@ jwt:
   online-key: "online-token:"
   # 驗證碼
   code-key: "captcha-code:"
-  # token 續期時間，在到期前30分鐘內操作，續一個小時
-  detect: 1800000
+  # token 續期時間，在到期前5分鐘內操作，續一個小時
+  detect: 300000
   renew: 3600000
   claim_key_username: username
   authorities_key: user

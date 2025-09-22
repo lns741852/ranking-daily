@@ -35,10 +35,10 @@ public class Role extends BaseEntity implements Serializable {
     private Set<User> users;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "sys_roles_menus",
+    @JoinTable(name = "sys_roles_permissions",
             joinColumns = {@JoinColumn(name = "role_id",referencedColumnName = "role_id")},
-            inverseJoinColumns = {@JoinColumn(name = "menu_id",referencedColumnName = "menu_id")})
-    private Set<Menu> menus;
+            inverseJoinColumns = {@JoinColumn(name = "permission_id",referencedColumnName = "permission_id")})
+    private Set<Permission> permissions;
 
     @NotBlank
     private String name;

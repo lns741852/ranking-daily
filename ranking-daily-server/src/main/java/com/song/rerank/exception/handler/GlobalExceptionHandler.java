@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> badCredentialsException(BadCredentialsException e){
-        String message = "壞的憑證".equals(e.getMessage()) ? "用戶名或密碼不正確" : e.getMessage();
+        String message = "憑證錯誤".equals(e.getMessage()) ? "用戶名或密碼不正確" : e.getMessage();
         log.error(message);
         return buildResponseEntity(ApiError.error(message));
     }

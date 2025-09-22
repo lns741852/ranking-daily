@@ -2,7 +2,6 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import { HashRouter } from 'react-router-dom'
-
 /**
  * react 16~18 
  * import "antd/dist/reset.css"

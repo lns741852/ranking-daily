@@ -15,10 +15,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Zheng Jie
- * @date 2018-11-22
- */
+
 @Entity
 @Getter
 @Setter
@@ -66,12 +63,7 @@ public class User extends BaseEntity implements Serializable {
             return false;
         }
         User user = (User) o;
-        return Objects.equals(id, user.id) &&
-                Objects.equals(username, user.username);
+        return Objects.equals(id, user.id);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, username);
-    }
 }

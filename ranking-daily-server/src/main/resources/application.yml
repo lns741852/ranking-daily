@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8080
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
@@ -13,24 +13,23 @@ spring:
     redis:
       repositories:
         enabled: false
+
+  #配置 oauth2
   security:
     oauth2:
-#      resourceserver:
-#        jwt:
-#          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
       client:
         registration:
           google:
             client-id: 749908669508-fiufs12mrds4uigmne4cp6rvb6t3rnns.apps.googleusercontent.com
             client-secret: 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
             scope: openid, profile, email
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: http://127.0.0.1:8080/login/oauth2/code/google
         provider:
           google:
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-            token-uri: https://www.googleapis.com/oauth2/v4/token
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+            user-name-attribute: sub
 
   #配置 Jpa
   jpa:

@@ -1,6 +1,6 @@
 package com.song.rerank.security;
 
-import com.song.rerank.config.properties.SecurityProperties;
+import com.song.rerank.properties.SecurityProperties;
 import com.song.rerank.utils.EncryptUtils;
 import com.song.rerank.utils.RedisUtils;
 import io.jsonwebtoken.*;
@@ -17,9 +17,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -30,32 +27,9 @@ public class TokenProvider {
     private final SecurityProperties properties;
     private final RedisUtils redisUtils;
 
-    public String createToken(Authentication authentication) {
-        JwtBuilder jwtBuilder = getJwtBuilder()
-                .id(UUID.randomUUID().toString())
-                .subject(authentication.getName())
-                .claim(properties.getClaimKeyUsername(), authentication.getName());
-
-        jwtBuilder.header()
-                .add(properties.getAuthoritiesKey(), authentication.getName());
-
-        return jwtBuilder.compact();
+    public String createToken( String username) {
+        return getJwtBuilder().subject(username).compact();
     }
-
-    public String createToken(String subject,  String name) {
-        JwtBuilder jwtBuilder = getJwtBuilder()
-                .id(UUID.randomUUID().toString())
-                .subject(subject)
-                .claim(properties.getClaimKeyUsername(), name);
-
-        jwtBuilder.header()
-                .add(properties.getAuthoritiesKey(),name);
-
-        return jwtBuilder.compact();
-    }
-
-
-
 
     Authentication getAuthentication(String token) {
         Claims claims = getClaims(token);
@@ -67,14 +41,14 @@ public class TokenProvider {
         return getJwtParser().parseSignedClaims(token).getPayload();
     }
 
-    public void checkRenewal(String token) {
-        long timeMillis = redisUtils.getExpire(properties.getOnlineKey() + token) * 1000;
+    public void renewToken(String token) {
+        long expireTimeMs = redisUtils.getExpire(properties.getOnlineKey() + token) * 1000;
         Instant now = Instant.now();
-        Instant expireInstant = now.plusMillis(timeMillis);
+        Instant expireInstant = now.plusMillis(expireTimeMs);
         long differ = expireInstant.toEpochMilli() - now.toEpochMilli();
         if (differ <= properties.getDetect()) {
-            long renewMillis = timeMillis + properties.getRenew();
-            redisUtils.expire(properties.getOnlineKey() + token, renewMillis, TimeUnit.MILLISECONDS);
+            long newExpireTimeMs = expireTimeMs + properties.getRenew();
+            redisUtils.expire(properties.getOnlineKey() + token, newExpireTimeMs, TimeUnit.MILLISECONDS);
         }
     }
 

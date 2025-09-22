@@ -15,15 +15,13 @@
  */
 package com.song.rerank.controller;
 
-import com.song.rerank.annotation.controller.AnonymousDeleteMapping;
-import com.song.rerank.annotation.controller.AnonymousPostMapping;
-import com.song.rerank.config.properties.LoginProperties;
-import com.song.rerank.config.properties.SecurityProperties;
+import com.song.rerank.properties.LoginProperties;
+import com.song.rerank.properties.SecurityProperties;
 import com.song.rerank.domain.dto.JwtUserDto;
 import com.song.rerank.domain.dto.LoginDto;
 import com.song.rerank.security.TokenProvider;
-import com.song.rerank.service.UserStatuService;
 
+import com.song.rerank.utils.RedisUtils;
 import com.song.rerank.utils.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +37,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Zheng Jie
  * @date 2018-11-23
@@ -49,42 +44,32 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 //@Api(tags = "系統：系統授權接口")
 public class AuthorizationController {
     private final SecurityProperties securityProperties;
-    private final UserStatuService userStatuService;
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final  LoginProperties loginProperties;
 
+    private final  RedisUtils redisUtils;
+
 //    @Log("用戶登入")
 //    @ApiOperation("登錄授權")
-    @AnonymousPostMapping(value = "/login")
-    public ResponseEntity<Object> login(@Validated @RequestBody LoginDto loginDto, HttpServletRequest request) throws Exception {
-
+    @PostMapping(value = "/login")
+    public ResponseEntity<JwtUserDto> login(@Validated @RequestBody LoginDto loginDto, HttpServletRequest request) {
         //底層使用UserDetail做登入認證
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String token = tokenProvider.createToken(authentication);
+        String token = tokenProvider.createToken(authentication.getName());
         JwtUserDto jwtUserDto = (JwtUserDto) authentication.getPrincipal();
-        // 返回 token 與 用戶信息
-        Map<String, Object> authInfo = new HashMap<String, Object>(2) {{
-            put("token", securityProperties.getTokenStartWith() + token);
-            put("user", jwtUserDto);
-        }};
-        if (loginProperties.isSingleLogin()) {
-            // 踢掉之前登入的token
-            userStatuService.deleteByUsername(loginDto.getUsername());
-        }
-        // 保存在線信息
-        userStatuService.save(jwtUserDto, token, request);
+        jwtUserDto.setToken(securityProperties.getTokenStartWith() + token);
         // 返回登錄信息
-        return ResponseEntity.ok(authInfo);
+        return ResponseEntity.ok(jwtUserDto);
     }
 
 //    @ApiOperation("獲取用戶信息")
@@ -95,9 +80,17 @@ public class AuthorizationController {
 
 
 //    @ApiOperation("退出登錄")
-    @AnonymousDeleteMapping(value = "/logout")
+    @DeleteMapping(value = "/logout")
     public ResponseEntity<Object> logout(HttpServletRequest request) {
-        userStatuService.logout(tokenProvider.getToken(request));
+//        userStatuService.logout(tokenProvider.getToken(request));
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+
+    @DeleteMapping(value = "/clearRedisCache")
+    public ResponseEntity<Object> clearRedisCache(HttpServletRequest request) {
+        redisUtils.clearRedisCache();
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 }

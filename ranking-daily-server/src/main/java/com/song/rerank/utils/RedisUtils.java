@@ -15,8 +15,10 @@
  */
 package com.song.rerank.utils;
 
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.*;
@@ -27,18 +29,11 @@ import java.util.concurrent.TimeUnit;
 
 
 @Component
-@SuppressWarnings({"unchecked", "all"})
+@AllArgsConstructor
 public class RedisUtils {
     private static final Logger log = LoggerFactory.getLogger(RedisUtils.class);
 
-    private RedisTemplate<Object, Object> redisTemplate;
-
-    public RedisUtils(RedisTemplate<Object, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-        this.redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        this.redisTemplate.setKeySerializer(new StringRedisSerializer());
-        this.redisTemplate.setStringSerializer(new StringRedisSerializer());
-    }
+    private final RedisTemplate<Object, Object> redisTemplate;
 
     /**
      * 指定緩存失效時間
@@ -704,5 +699,10 @@ public class RedisUtils {
         log.debug("成功刪除緩存：" + keys.toString());
         log.debug("緩存刪除數量：" + count + "個");
         log.debug("--------------------------------------------");
+    }
+
+
+    public void clearRedisCache(){
+        redisTemplate.getConnectionFactory().getConnection().flushDb();
     }
 }

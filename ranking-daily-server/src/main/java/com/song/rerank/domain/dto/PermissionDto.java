@@ -18,31 +18,21 @@ package com.song.rerank.domain.dto;
 import lombok.Getter;
 import lombok.Setter;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
-
+/**
+ * @author Zheng Jie
+ * @date 2018-12-17
+ */
 @Getter
 @Setter
-public class RoleDto  implements Serializable {
+public class PermissionDto implements Serializable {
 
     private Long id;
 
-    private Set<PermissionDto> permissions;
+    private String permission;
 
-    private String name;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        RoleDto roleDto = (RoleDto) o;
-        return Objects.equals(id, roleDto.id);
-    }
 
     @Override
     public int hashCode() {

@@ -1,81 +1,55 @@
 package com.song.rerank.security;
 
-import com.song.rerank.config.properties.SecurityProperties;
-import com.song.rerank.domain.dto.OnlineUserDto;
+import com.song.rerank.properties.SecurityProperties;
 import com.song.rerank.service.UserCacheService;
-import com.song.rerank.service.UserStatuService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.song.rerank.utils.StringUtil;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Objects;
 
+
+/**
+ * OncePerRequestFilter 適用 security中，防止被多次執行
+ */
+//@Component
 @AllArgsConstructor
-public class TokenFilter extends GenericFilterBean {
+public class TokenFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(TokenFilter.class);
     private final TokenProvider tokenProvider;
     private final SecurityProperties properties;
-    private final UserStatuService userStatuService;
-    private final UserCacheService userCacheService;
+
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
-        HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
-        String token = resolveToken(httpServletRequest);
-        // Token 為空的不需要去查 Redis
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(token)) {
-            OnlineUserDto onlineUserDto = null;
-            boolean cleanUserCache = false;
-            try {
-                String loginKey = tokenProvider.loginKey(token);
-                onlineUserDto = userStatuService.getOne(loginKey);
-            } catch (ExpiredJwtException e) {
-                log.error(e.getMessage());
-                cleanUserCache = true;
-            } finally {
-                if (cleanUserCache || Objects.isNull(onlineUserDto)) {
-                    userCacheService.cleanUserCache(String.valueOf(tokenProvider.getClaims(token).get(properties.getAuthoritiesKey())));
-                }
-            }
-            // StringUtils.hasText(token) 判斷是否不含非法字符
-            if (onlineUserDto != null && StringUtils.hasText(token)) {
-                Authentication authentication = tokenProvider.getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                // Token 續期
-                tokenProvider.checkRenewal(token);
-            }
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String token = resolveToken(request);
+        if (StringUtil.isNotBlank(token)) {
+            Authentication authentication = tokenProvider.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            tokenProvider.renewToken(token);
         }
-        filterChain.doFilter(servletRequest, servletResponse);
+        filterChain.doFilter(request, response);
     }
 
-    /**
-     * 初步檢測Token
-     *
-     * @param request /
-     * @return /
-     */
+
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(properties.getHeader());
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(properties.getTokenStartWith())) {
-            // 去掉前墜
+        if (StringUtil.isNotBlank(bearerToken) && bearerToken.startsWith(properties.getTokenStartWith())) {
             return bearerToken.replace(properties.getTokenStartWith(), "");
-        } else {
-            log.debug("非法Token：{}", bearerToken);
         }
+        log.debug("非法Token：{}", bearerToken);
         return null;
     }
+
+
 }

@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+/**
+ * JPA自動寫入、creater,updater,createDate,updateDate
+ */
 @Component("auditorAware")
 public class AuditorConfig implements AuditorAware<String> {
     @Override

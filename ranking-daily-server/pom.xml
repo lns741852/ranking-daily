@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.song</groupId>
-	<artifactId>rerank</artifactId>
+	<artifactId>ranking-daily</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>rerank</name>
+	<name>ranking-daily</name>
 
 	<properties>
 		<java.version>17</java.version>
@@ -131,6 +131,13 @@
 			<artifactId>mapstruct-processor</artifactId>
 			<version>${mapstruct.version}</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<!--orika依赖-->
+		<dependency>
+			<groupId>ma.glasnost.orika</groupId>
+			<artifactId>orika-core</artifactId>
+			<version>1.5.4</version>
 		</dependency>
 
 		<dependency>

@@ -15,14 +15,10 @@
  */
 package com.song.rerank.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.song.rerank.config.AuthorityDeserializerConfig;
-import com.song.rerank.domain.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,6 +31,7 @@ import java.util.Set;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class JwtUserDto implements UserDetails {
 
     private Long id;
@@ -61,18 +58,13 @@ public class JwtUserDto implements UserDetails {
 
     private Date pwdResetTime;
 
+    private String token;
+
     @Override
-    @JsonDeserialize(using = AuthorityDeserializerConfig.class)
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        if (this.isAdmin) {
-            return List.of(new SimpleGrantedAuthority("admin"));
-        }
-
-        List<SimpleGrantedAuthority> list = roles.stream()
-                .flatMap(roleDto -> roleDto.getMenus().stream())
+        return roles.stream()
+                .flatMap(roleDto -> roleDto.getPermissions().stream())
+                .filter(menuDto -> menuDto.getPermission()!= null)
                 .map(menuDto -> new SimpleGrantedAuthority(menuDto.getPermission())).toList();
-
-        return list;
     }
 }
